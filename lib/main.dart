@@ -479,6 +479,136 @@ class FlatDetailsScreen extends StatelessWidget {
 }
 
 
+                
+// ------------------- PLACEHOLDER LOGIN SCREEN -------------------
+class PlaceholderLoginScreen extends StatelessWidget {
+  const PlaceholderLoginScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Login")),
+      body: const Center(child: Text("Login Screen Placeholder")),
+    );
+  }
+}
+
+
+
+// ------------------- CUSTOMER PROFILE SCREEN -------------------
+class CustomerProfileScreen extends StatelessWidget {
+  const CustomerProfileScreen({super.key});
+
+  // Static list to store booked flats
+  static final List<Map<String, String>> _bookedFlats = [];
+
+  // Method to add a booking (updated to include confirmed: false)
+  static void addBooking(Map<String, String> flat) {
+    _bookedFlats.add({
+      ...flat,
+      'confirmed': 'false', // Initialize as unconfirmed
+    });
+  }
+
+  // Method to confirm a booking
+  static void confirmBooking(int index, BuildContext context) {
+    _bookedFlats[index]['confirmed'] = 'true';
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Booking Confirmed", style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Filter bookings by current user
+    final userBookings = _bookedFlats
+        .asMap()
+        .entries
+        .where((entry) => entry.value['owner'] == HomeScreen._currentUserEmail)
+        .toList();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Customer Profile")),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white, Colors.blueGrey],
+          ),
+        ),
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.indigo,
+                child: Icon(Icons.person, size: 60, color: Colors.white),
+              ),
+            ),
+            Text(
+              HomeScreen._currentUserEmail ?? "Customer",
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.indigo),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Booked Flats",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
+            ),
+            Expanded(
+              child: userBookings.isEmpty
+                  ? const Center(child: Text("No flats booked yet", style: TextStyle(fontSize: 18, color: Colors.black54)))
+                  : ListView.builder(
+                itemCount: userBookings.length,
+                itemBuilder: (context, index) {
+                  final entry = userBookings[index];
+                  final flat = entry.value;
+                  final originalIndex = entry.key; // Index in _bookedFlats
+                  final isConfirmed = flat['confirmed'] == 'true';
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: ListTile(
+                      title: Text(
+                        flat['title']!,
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+                      ),
+                      subtitle: Text(flat['description']!),
+                      trailing: ElevatedButton(
+                        onPressed: isConfirmed
+                            ? null // Disable if confirmed
+                            : () {
+                          confirmBooking(originalIndex, context);
+                          (context as Element).markNeedsBuild(); // Force rebuild
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isConfirmed ? Colors.grey : Colors.orangeAccent,
+                          minimumSize: const Size(100, 36),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text(
+                          isConfirmed ? "Confirmed" : "Confirm Book",
+                          style: const TextStyle(fontSize: 14, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
 // ------------------- FLAT OWNER SCREEN -------------------
 class FlatOwnerScreen extends StatefulWidget {
   const FlatOwnerScreen({super.key});
