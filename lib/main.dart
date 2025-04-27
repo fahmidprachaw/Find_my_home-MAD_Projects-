@@ -402,3 +402,243 @@ class AdminScreen extends StatelessWidget {
     );
   }
 }
+// ------------------- HOME SCREEN -------------------
+
+class HomeScreen extends StatefulWidget {
+  HomeScreen({super.key});
+
+  // Current user email for global access
+  static String? _currentUserEmail = "customer@example.com";
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final List<Map<String, String>> dummyPosts = const [
+    {'title': 'Flat in Dhanmondi', 'description': '2 bed, 2 bath flat'},
+    {'title': 'Flat in Gulshan', 'description': '3 bed, 3 bath luxury flat'},
+    {'title': 'Flat in Mirpur1', 'description': '2 bed, 1 bath flat'},
+    {'title': 'Flat in Savar', 'description': '3 bed, 2 bath luxury flat'},
+    {'title': 'Flat in Uttora', 'description': '2 bed, 1 bath flat'},
+    {'title': 'Flat in Mirpur10', 'description': '3 bed, 2 bath luxury flat'},
+  ];
+
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, String>> _filteredPosts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredPosts = List.from(dummyPosts); // Initialize with all posts
+    _searchController.addListener(_filterPosts);
+  }
+
+  void _filterPosts() {
+    String query = _searchController.text.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredPosts = List.from(dummyPosts);
+      } else {
+        _filteredPosts = dummyPosts
+            .where((post) => post['title']!.toLowerCase().contains(query))
+            .toList();
+      }
+    });
+  }
+
+  void logout(BuildContext context) {
+    HomeScreen._currentUserEmail = null; // Clear user session
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final logoutButtonStyle = ElevatedButton.styleFrom(
+      backgroundColor: Colors.redAccent,
+      minimumSize: const Size(180, 50),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      textStyle: const TextStyle(fontSize: 24, color: Colors.white),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.person, color: Colors.white),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CustomerProfileScreen()),
+          ),
+        ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Find My Home",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            Container(
+              width: 320, // Fixed width to prevent overflow
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        hintText: "Search by flat title...",
+                        hintStyle: TextStyle(color: Colors.white70),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.search, color: Colors.white, size: 20),
+                    onPressed: _filterPosts, // Optional: Explicit search trigger
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.white, Colors.blueGrey],
+              ),
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: _filteredPosts.isEmpty
+                      ? const Center(child: Text("No flats found", style: TextStyle(fontSize: 18, color: Colors.black54)))
+                      : ListView.builder(
+                    itemCount: _filteredPosts.length,
+                    itemBuilder: (context, index) {
+                      final post = _filteredPosts[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: ListTile(
+                          title: Text(post['title']!, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo)),
+                          subtitle: Text(post['description']!),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => FlatDetailsScreen(post: post)),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Center(
+                  child: ElevatedButton.icon(
+                    onPressed: () => logout(context),
+                    icon: const Icon(Icons.logout),
+                    label: const Text("Logout"),
+                    style: logoutButtonStyle,
+                  ),
+                ),
+                const SizedBox(height: 16), // Bottom spacing
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+// ------------------- VIEW POSTED FLATS SCREEN -------------------
+class ViewPostedFlatsScreen extends StatelessWidget {
+  const ViewPostedFlatsScreen({super.key});
+
+  void deletePost(BuildContext context, String postId) {
+    // Remove post from local list
+    _FlatOwnerScreenState._posts.removeWhere((post) => post['id'] == postId);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Post Deleted", style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Access local posts from FlatOwnerScreen
+    final posts = _FlatOwnerScreenState._posts
+        .where((post) => post['owner'] == FirebaseAuth.instance.currentUser!.email)
+        .toList();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Posted Flats")),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white, Colors.blueGrey],
+          ),
+        ),
+        child: posts.isEmpty
+            ? const Center(child: Text("No flats posted yet", style: TextStyle(fontSize: 18, color: Colors.black54)))
+            : ListView.builder(
+          itemCount: posts.length,
+          itemBuilder: (context, index) {
+            final flat = posts[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: ListTile(
+                title: Text(
+                  flat['title'] ?? 'No Title',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+                ),
+                subtitle: Text(flat['description'] ?? 'No Description'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  onPressed: () {
+                    deletePost(context, flat['id']);
+                    // Force rebuild by navigating back to the same screen
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ViewPostedFlatsScreen()),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
