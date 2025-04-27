@@ -8,6 +8,37 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyDlBvvydVz0T2heqPR_1LDiLKm8JkNXU4I",
+        authDomain: "find-my-home-4b849.firebaseapp.com",
+        projectId: "find-my-home-4b849",
+        storageBucket: "find-my-home-4b849.firebasestorage.app",
+        messagingSenderId: "42327999124",
+        appId: "1:42327999124:web:02e3d49a9ac4c26a882a81",
+      ),
+    );
+  } else {
+            elevation: 4,
+          backgroundColor: Colors.indigo,
+          titleTextStyle: TextStyle(color: Colors.white, fontSize: 20),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: Colors.indigo,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ),
+      home: const LoginScreen(),
+    );
+  }
+}await Firebase.initializeApp();
+  }
+
   
 
   runApp(const MyApp());
@@ -45,6 +76,299 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
+// ------------------- LOGIN SCREEN -------------------
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  void login() async {
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      if (email.contains("admin")) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminScreen()));
+      } else if (email.contains("owner")) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const FlatOwnerScreen()));
+      } else {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) =>  HomeScreen()));
+      }
+    } catch (e) {
+      print("Login error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid email or password", style: TextStyle(color: Colors.white)), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.indigo, Colors.blueAccent],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("Welcome Back", style: TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 40),
+                TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: "Email",
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.2),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: "Password",
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.2),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orangeAccent,
+                    minimumSize: const Size(150, 50),
+                  ),
+                  child: const Text("Login", style: TextStyle(fontSize: 18)),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                  child: const Text("Don't have an account? Register", style: TextStyle(color: Colors.white70)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------- REGISTER SCREEN -------------------
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  _RegisterScreenState createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  bool _isCustomer = false;
+  bool _isFlatOwner = false;
+
+  void register() async {
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+    String name = _nameController.text.trim();
+
+    // Input validation
+    if (email.isEmpty || !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a valid email", style: TextStyle(color: Colors.white)), backgroundColor: Colors.red),
+      );
+      return;
+    }
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password must be at least 6 characters", style: TextStyle(color: Colors.white)), backgroundColor: Colors.red),
+      );
+      return;
+    }
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter your name", style: TextStyle(color: Colors.white)), backgroundColor: Colors.red),
+      );
+      return;
+    }
+    if (!_isCustomer && !_isFlatOwner && !email.contains("admin")) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a role (Customer or Flat Owner)", style: TextStyle(color: Colors.white)), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+      String role;
+      if (email.contains("admin")) {
+        role = 'admin'; // Admin role unchanged from previous logic
+      } else {
+        role = _isCustomer ? 'customer' : 'flat_owner'; // Role based on checkbox
+      }
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+          'name': name,
+          'email': email,
+          'role': role,
+        });
+      } catch (firestoreError) {
+        print("Firestore write error: $firestoreError");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("User created, but data save failed", style: TextStyle(color: Colors.white)), backgroundColor: Colors.orange),
+        );
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Registration Successful", style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
+      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+    } catch (e) {
+      print("Registration error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Registration failed: $e", style: const TextStyle(color: Colors.white)), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blueAccent, Colors.indigo],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Create Account", style: TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 40),
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: "Name",
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.2),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: "Email",
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.2),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: "Password",
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.2),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text("Select Role (if not Admin)", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                        value: _isCustomer,
+                        onChanged: (value) {
+                          setState(() {
+                            _isCustomer = value ?? false;
+                            if (_isCustomer) _isFlatOwner = false; // Ensure only one is selected
+                          });
+                        },
+                        activeColor: Colors.orangeAccent,
+                      ),
+                      const Text("Customer", style: TextStyle(color: Colors.white)),
+                      const SizedBox(width: 20),
+                      Checkbox(
+                        value: _isFlatOwner,
+                        onChanged: (value) {
+                          setState(() {
+                            _isFlatOwner = value ?? false;
+                            if (_isFlatOwner) _isCustomer = false; // Ensure only one is selected
+                          });
+                        },
+                        activeColor: Colors.orangeAccent,
+                      ),
+                      const Text("Flat Owner", style: TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: register,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orangeAccent,
+                      minimumSize: const Size(160, 50),
+                    ),
+                    child: const Text("Register", style: TextStyle(fontSize: 18)),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
+                    child: const Text(
+                      "Already have an account? Login",
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 
 
 // ------------------- FLAT DETAILS SCREEN -------------------
