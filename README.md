@@ -56,6 +56,9 @@ Google Maps: Used for displaying flat locations on a map.
 
 Dart: Programming language used to develop the Flutter application.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
+To view our prototype, view the
+[prototype](https://www.figma.com/proto/kuRnxGrgqeyHl2y75POR4y/StayEase?node-id=1-2&starting-point-node-id=1%3A2), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
+To view our project report, view the
+[report](https://drive.google.com/file/d/19f-THMXWWllT_kybtn7i0T9CkfVVo_KU/view?usp=sharing), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
