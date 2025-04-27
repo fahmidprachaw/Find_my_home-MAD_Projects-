@@ -2,8 +2,9 @@
 **
 Find My Home is a mobile application developed using Flutter and Firebase to provide a platform for users to manage flat listings, search for flats, and handle bookings. This application supports multiple user roles including Customers, Flat Owners, and Admins, with different functionalities tailored to each role. The system ensures seamless interaction between users while leveraging Firebase services for authentication, storage, and real-time database management.
 
-**Table of Contents
-**   Overview
+Table of Contents:
+
+    Overview
     Key Features
     Tech Stack
     Installation & Setup
